@@ -4,7 +4,7 @@ import Instructions from '../Instructions/Instructions';
 import './Game.css'
 import React, { useState, useEffect } from 'react';
 import {Link} from 'react-router-dom';
-import GameBoard from '../../components/GameBoard/GameBoard';
+import GameBoard from '../../components/GameBoard/GameBoardAndColorPicker';
 
 export default function Game(props){
 
@@ -36,7 +36,7 @@ export default function Game(props){
 
         <div id="game-div">
 
-            {!displayInstructions ? (
+            {(!displayInstructions && !gameInProgress) && (
 
                 <>
                     <div className='fit-content mx-auto my-2'>
@@ -51,10 +51,8 @@ export default function Game(props){
                     </div>
                 </>
 
-            ) : (
-
-                <Instructions onBackButtonClick={toggleInstructions}/>
-            ) }
+            )}
+            {displayInstructions && (<Instructions onBackButtonClick={toggleInstructions}/>)} 
             {gameInProgress && (<GameBoard />)} 
         </div>
     )
