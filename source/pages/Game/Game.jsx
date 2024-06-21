@@ -24,6 +24,11 @@ export default function Game(props){
         }
     }
 
+    const handleGuess = () => {
+
+        console.log("guess made!!")
+    }
+
     const playGame = () => {
 
         setGameInProgress(true)
@@ -53,7 +58,7 @@ export default function Game(props){
 
             )}
             {displayInstructions && (<Instructions onBackButtonClick={toggleInstructions}/>)} 
-            {gameInProgress && (<GameBoard />)} 
+            {gameInProgress && (<GameBoard onGuess={handleGuess}/>)} 
         </div>
     )
 }
