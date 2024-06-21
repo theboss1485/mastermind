@@ -1,57 +1,34 @@
 import React, { useRef, useEffect, useState } from 'react';
 import './GameBoardAndColorPicker.css'
-export default function GameBoard(){
+export default function GameBoard({onGuess}){
 
     const canvasReference = useRef(null);
     const yOffset = 90
     const canvasWidth = 300;
     const canvasHeight = 700 + yOffset;
-    
     const largeRadius = 20;
     const colorPickerCircleRadius = 19
-
+    const questionMarkWidth = 19;
+    const questionMarkHeight = 27;
+    let questionMarkGlobalX = null;
+    let questionMarkYBaseValue = null;
     const [clickedGameHoleIndices, setClickedGameHoleIndices] = useState(null);
     const [clickedColorHoleIndices, setClickedColorHoleIndices] = useState(null);
     const [gameBoardCircleFillColor, setGameBoardCircleFillColor] = useState(null)
+    const [questionMarksLoaded, setQuestionMarksLoaded] = useState(false);
+    const [guessCounter, setGuessCounter] = useState(0)
+    const [questionMarks] = useState([(() => {const image1 = new Image(); image1.src = '../../public/assets/images/black-question-mark.png'; return image1; })(),
+                                      (() => {const image2 = new Image(); image2.src = '../../public/assets/images/gray-question-mark.png'; return image2;})()
+    ])
 
     useEffect(() => {
         
         const canvas = canvasReference.current;
         let ctx = canvas.getContext('2d');
+        
 
         // Use ctx to draw on the canvas
-        canvas.addEventListener('click', (event) => {
-
-            const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-    
-            // Check if the click is inside any of the large holes
-
-            for(let colorHoleCounter = 0; colorHoleCounter < 6; colorHoleCounter++){
-
-                const holeX = 30 + (colorHoleCounter % 6) * 48
-                const holeY = 40
-
-                if (Math.pow(x - holeX, 2) + Math.pow(y - holeY, 2) <= Math.pow(colorPickerCircleRadius, 2)) {
-
-                    setClickedColorHoleIndices(colorHoleCounter);
-                    break;
-                }
-            }
-
-            for (let gameHoleCounter = 0; gameHoleCounter < 48; gameHoleCounter++) {
-
-                const holeX = 40 + (gameHoleCounter % 4) * 50;
-                const holeY = yOffset+ 40 + Math.floor(gameHoleCounter / 4) * 50;
-
-                if (Math.pow(x - holeX, 2) + Math.pow(y - holeY, 2) <= Math.pow(largeRadius, 2)) {
-
-                    setClickedGameHoleIndices([(gameHoleCounter % 4), (Math.floor(gameHoleCounter / 4))]);
-                    break;
-                }
-            }
-        });
+        
 
         const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
         gradient.addColorStop(0, 'rgb(166, 90, 36)'); // light brown
@@ -63,50 +40,13 @@ export default function GameBoard(){
         ctx.roundRect(0, 0, canvasWidth, 80, 20);
         ctx.fill();
 
-        let centerXSmall = 250;
-        let centerYSmall = 27 + yOffset;
-
         drawColorPicker(ctx);
 
         for(let rowIndex = 0; rowIndex <= 11; rowIndex++){
 
-            for(let drawLargeCircles = 0; drawLargeCircles <= 3; drawLargeCircles++){
+            drawLargeCircleRowAndQuestionMark(ctx, rowIndex)
 
-                let centerXLarge = (40 + (drawLargeCircles * 50));
-                let centerYLarge = (40 + yOffset + (rowIndex * 50));
-    
-                drawSolidCircle(ctx, centerXLarge, centerYLarge, largeRadius)
-            }
-
-            for(let drawSmallCirclesY = 0; drawSmallCirclesY <= 1; drawSmallCirclesY++){
-
-                for (let drawSmallCirclesX = 0; drawSmallCirclesX <= 1; drawSmallCirclesX++){
-
-                    let smallRadius = 7
-
-                    drawSolidCircle(ctx, centerXSmall, centerYSmall, smallRadius)
-
-                    
-                    ctx.beginPath();
-                    ctx.fillStyle = 'gray';
-                    ctx.arc(centerXSmall, centerYSmall, smallRadius, 0, 2 * Math.PI);
-                    ctx.fill();
-
-                    centerXSmall += 26;
-                }
-
-                if(drawSmallCirclesY === 0){
-
-                    centerYSmall += 26
-
-                } else if(drawSmallCirclesY === 1){
-
-                    centerYSmall += 24
-                }
-
-                centerXSmall = 250;
-                
-            }
+            drawFourSmallCircles(ctx, rowIndex);
         }
 
         let codeCircleX = ((canvasWidth / 2) - (3.5 * largeRadius))
@@ -119,7 +59,7 @@ export default function GameBoard(){
             codeCircleX += 50;
         }
 
-    }, []);
+    }, [questionMarksLoaded]);
 
     useEffect(() => {
 
@@ -163,7 +103,7 @@ export default function GameBoard(){
             let ctx = canvas.getContext('2d');
             // ctx.lineWidth = 5;
 
-        drawColorPicker(ctx);
+            drawColorPicker(ctx);
 
             let centerX = (30 + (clickedColorHoleIndices * 48));
             let centerY = 40
@@ -175,6 +115,7 @@ export default function GameBoard(){
             ctx.stroke();
             setClickedColorHoleIndices(null)
         }
+
     }, [clickedColorHoleIndices])
 
     useEffect(() => {
@@ -187,7 +128,7 @@ export default function GameBoard(){
             let centerX = (40 + (clickedGameHoleIndices[0] * 50))
             let centerY = (40 + yOffset + (clickedGameHoleIndices[1] * 50))
 
-            drawSolidCircle(ctx, centerX, centerY, largeRadius, false, 0, true)
+            drawSolidCircle(ctx, centerX, centerY, largeRadius, gameBoardCircleFillColor, true)
             setClickedGameHoleIndices(null)
         }
 
@@ -195,7 +136,7 @@ export default function GameBoard(){
 
 
 
-    const drawSolidCircle = (ctx, centerX, centerY, radius, colorPicker = false, colorPickerIndex = 0, click = false) => {
+    const drawSolidCircle = (ctx, centerX, centerY, radius, fillColor = 'gray', click = false) => {
 
         let fillStyle = null
 
@@ -205,32 +146,7 @@ export default function GameBoard(){
         
         } else {
 
-            fillStyle = 'gray'
-        }
-        
-        if(colorPicker === true){
-
-            switch(colorPickerIndex){
-
-                case 0: 
-                    fillStyle = 'blue';
-                    break;
-                case 1: 
-                    fillStyle = '#00FF00';
-                    break;
-                case 2: 
-                    fillStyle = 'red';
-                    break;
-                case 3: 
-                    fillStyle = 'cyan';
-                    break;
-                case 4: 
-                    fillStyle = 'magenta';
-                    break;
-                case 5: 
-                    fillStyle = 'yellow';
-                    break;
-            }
+            fillStyle = fillColor
         }
 
         ctx.beginPath();
@@ -239,14 +155,109 @@ export default function GameBoard(){
         ctx.fill();
     }
 
+    const drawLargeCircleRowAndQuestionMark = (ctx, rowIndex) => {
+
+        for(let drawLargeCircles = 0; drawLargeCircles <= 3; drawLargeCircles++){
+
+            let centerXLarge = (40 + (drawLargeCircles * 50));
+            let centerYLarge = (40 + yOffset + (rowIndex * 50));
+
+            if(rowIndex === guessCounter){
+
+                drawSolidCircle(ctx, centerXLarge, centerYLarge, largeRadius, 'black')
+
+            } else {
+
+                drawSolidCircle(ctx, centerXLarge, centerYLarge, largeRadius, 'gray')
+            }
+
+            
+
+            if(drawLargeCircles === 3){
+
+                let questionMarkX = centerXLarge + largeRadius * 1.30;
+                let questionMarkY = centerYLarge - largeRadius * 0.75;
+
+                if(drawLargeCircles === 3 && questionMarkGlobalX === null && questionMarkYBaseValue === null){
+
+                    questionMarkGlobalX = questionMarkX;
+                    questionMarkYBaseValue = questionMarkY - yOffset
+                }
+
+                if(rowIndex === guessCounter){
+
+                    ctx.drawImage(questionMarks[0], questionMarkX, questionMarkY)
+                
+                } else {
+
+                    ctx.drawImage(questionMarks[1], questionMarkX, questionMarkY)
+                }
+            }
+        }
+    }
+
+    const drawFourSmallCircles = (ctx, rowIndex) => {
+
+        let centerXSmall = 250;
+        let centerYSmall = (27 + yOffset) + (50 * rowIndex);
+
+        for(let drawSmallCirclesY = 0; drawSmallCirclesY <= 1; drawSmallCirclesY++){
+
+            for (let drawSmallCirclesX = 0; drawSmallCirclesX <= 1; drawSmallCirclesX++){
+
+                let smallRadius = 7
+
+                drawSolidCircle(ctx, centerXSmall, centerYSmall, smallRadius)
+
+                centerXSmall += 26;
+            }
+
+            if(drawSmallCirclesY === 0){
+
+                centerYSmall += 26
+
+            } else if(drawSmallCirclesY === 1){
+
+                centerYSmall += 24
+            }
+
+            centerXSmall = 250;
+            
+        }
+    }
+
     const drawColorPicker = (ctx) => {
+
+        let fillStyle = null;
 
         for(let drawColorPickerCircleIndex = 0; drawColorPickerCircleIndex <= 5; drawColorPickerCircleIndex++){
 
             let centerXLarge = (30 + (drawColorPickerCircleIndex * 48));
-            let centerYLarge = 40
+            let centerYLarge = 40;
+
+                switch(drawColorPickerCircleIndex){
+    
+                    case 0: 
+                        fillStyle = 'blue';
+                        break;
+                    case 1: 
+                        fillStyle = '#00FF00';
+                        break;
+                    case 2: 
+                        fillStyle = 'red';
+                        break;
+                    case 3: 
+                        fillStyle = 'cyan';
+                        break;
+                    case 4: 
+                        fillStyle = 'magenta';
+                        break;
+                    case 5: 
+                        fillStyle = 'yellow';
+                        break;
+                }
             
-            drawSolidCircle(ctx, centerXLarge, centerYLarge, colorPickerCircleRadius, true, drawColorPickerCircleIndex)
+            drawSolidCircle(ctx, centerXLarge, centerYLarge, colorPickerCircleRadius, fillStyle)
         }
     }
 
@@ -259,8 +270,74 @@ export default function GameBoard(){
         });
     }
 
+    
+    async function loadQuestionMarks(questionMarks) {
+        console.log("question marks", questionMarks);
+        let loadedQuestionMarks = 0;
+    
+        await Promise.all(questionMarks.map(questionMark => {
+            return new Promise(resolve => {
+                questionMark.onload = function () {
+                    loadedQuestionMarks++;
+                    resolve();
+                };
+            });
+        }));
+    
+        if (loadedQuestionMarks === questionMarks.length) {
+            setQuestionMarksLoaded(true);
+        }
+    }
+
+    const canvasClicked = (event) => {
+
+        const canvas = canvasReference.current;
+
+        const canvasRect = canvas.getBoundingClientRect();
+        const x = event.clientX - canvasRect.left;
+        const y = event.clientY - canvasRect.top;
+
+        // Check if the click is inside any of the large holes
+
+        for(let colorHoleCounter = 0; colorHoleCounter < 6; colorHoleCounter++){
+
+            const holeX = 30 + (colorHoleCounter % 6) * 48
+            const holeY = 40
+
+            if (Math.pow(x - holeX, 2) + Math.pow(y - holeY, 2) <= Math.pow(colorPickerCircleRadius, 2)) {
+
+                setClickedColorHoleIndices(colorHoleCounter);
+                break;
+            }
+        }
+
+        for (let gameHoleCounter = 0; gameHoleCounter < 4; gameHoleCounter++) {
+
+            const holeX = 40 + (gameHoleCounter * 50);
+            const holeY = yOffset + 40 + (guessCounter * 50);
+
+            if (Math.pow(x - holeX, 2) + Math.pow(y - holeY, 2) <= Math.pow(largeRadius, 2)) {
+
+                setClickedGameHoleIndices([gameHoleCounter, guessCounter]);
+                break;
+            }
+        }
+
+
+
+        let questionMarkY = (questionMarkYBaseValue * (guessCounter + 1)) + yOffset;
+        let questionMarkX = questionMarkGlobalX;
+
+        if((x >= questionMarkX) && (x <= (questionMarkX + questionMarkWidth)) && (y >= questionMarkY) && (y <= (questionMarkY + questionMarkHeight))){
+
+            onGuess();
+        }
+    };
+
+    loadQuestionMarks(questionMarks);
+
     return (
 
-        <canvas className="my-3 centered" ref={canvasReference} width={canvasWidth} height={canvasHeight} />
+        <canvas className="my-3 centered" onClick={canvasClicked} ref={canvasReference} width={canvasWidth} height={canvasHeight} />
     )
 }

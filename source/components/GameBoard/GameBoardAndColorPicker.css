@@ -5,25 +5,25 @@
 }
 
 .blue-cursor {
-    cursor: url('../../../public/assets/images/blue-cursor.png'), auto;
+    cursor: url('../../public/assets/images/blue-cursor.png'), auto;
 }
 
 .green-cursor {
-    cursor: url('../../../public/assets/images/green-cursor.png'), auto;
+    cursor: url('../../public/assets/images/green-cursor.png'), auto;
 }
 
 .red-cursor {
-    cursor: url('../../../public/assets/images/red-cursor.png'), auto;
+    cursor: url('../../public/assets/images/red-cursor.png'), auto;
 }
 
 .cyan-cursor {
-    cursor: url('../../../public/assets/images/cyan-cursor.png'), auto;
+    cursor: url('../../public/assets/images/cyan-cursor.png'), auto;
 }
 
 .magenta-cursor {
-    cursor: url('../../../public/assets/images/magenta-cursor.png'), auto;
+    cursor: url('../../public/assets/images/magenta-cursor.png'), auto;
 }
 
 .yellow-cursor {
-    cursor: url('../../../public/assets/images/yellow-cursor.png'), auto;
+    cursor: url('../../public/assets/images/yellow-cursor.png'), auto;
 }
