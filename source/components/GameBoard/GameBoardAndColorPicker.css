@@ -27,3 +27,11 @@
 .yellow-cursor {
     cursor: url('../../public/assets/images/yellow-cursor.png'), auto;
 }
+
+.orange-cursor {
+    cursor: url('../../public/assets/images/orange-cursor.png'), auto;
+}
+
+.purple-cursor {
+    cursor: url('../../public/assets/images/purple-cursor.png'), auto;
+}

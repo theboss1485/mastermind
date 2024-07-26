@@ -1,8 +1,10 @@
 
 
 import Instructions from '../Instructions/Instructions';
+import { useSelector } from 'react-redux';
 import './Game.css'
-import React, { useState, useRef } from 'react';
+
+import React, { useState, useRef, useEffect } from 'react';
 import {Link} from 'react-router-dom';
 import GameBoard from '../../components/GameBoard/GameBoardAndColorPicker';
 
@@ -15,7 +17,40 @@ export default function Game(props){
     const [gameComplete, setGameComplete] = useState(false);
     const [colorCode, setColorCode] = useState([]);
     const [blackWhitePegs, setBlackWhitePegs] = useState(null);
+    const [gameType, setGameType] = useState(null);
     const [forceGameBoardUpdate, setForceGameBoardUpdate] = useState(false)
+    const [numberOfGuesses, setNumberOfGuesses] = useState(null);
+    const [numberOfColors, setNumberOfColors] = useState(null);
+    const [numberOfHolesPerGuess, setNumberOfHolesPerGuess] = useState(null);
+
+    const [stateUpdates, setStateUpdates] = useState(0)
+    const numberOfGuessesArray = useSelector(state => state.numberOfGuesses);
+    const numberOfColorsArray = useSelector(state => state.numberOfColors);
+    const numberOfHolesPerGuessArray = useSelector(state => state.numberOfHolesPerGuess);
+
+    useEffect(() => {
+
+        setNumberOfGuesses(numberOfGuessesArray[gameType])
+        setNumberOfColors(numberOfColorsArray[gameType])
+        setNumberOfHolesPerGuess(numberOfHolesPerGuessArray[gameType])
+        
+
+    }, [gameType])
+
+    useEffect(() => {
+
+        setStateUpdates(stateUpdates + 1)
+    }, [numberOfGuesses, numberOfColors, numberOfHolesPerGuess]) 
+
+    useEffect(() => {
+
+        if(stateUpdates === 3){
+
+            generateColorCode();
+        }
+
+    }, [stateUpdates])
+
 
     
 
@@ -73,12 +108,12 @@ export default function Game(props){
     
             setBlackWhitePegs({correctColorCorrectPosition: correctColorCorrectPosition, correctColorIncorrectPosition: correctColorIncorrectPosition})
 
-            if(correctColorCorrectPosition === 4){
+            if(correctColorCorrectPosition === numberOfHolesPerGuess){
 
                 await childRef.current.flashCircles('green', null, true);
                 childRef.current.drawActualCodeCircles(null, colorCode);
 
-            } else if (guessCounter === 11 && correctColorCorrectPosition !== 4){
+            } else if (guessCounter === numberOfGuesses - 1 && correctColorCorrectPosition !== numberOfHolesPerGuess){
 
                 await childRef.current.flashCircles('darkred', null, true);
                 childRef.current.drawActualCodeCircles(null, colorCode);
@@ -92,13 +127,16 @@ export default function Game(props){
         setGameInProgress(false);
     }
 
-    const playGame = () => {
+    const playGame = async (gameType) => {
 
-        generateColorCode();
+        setGameType(gameType)
         setGameInProgress(true);
         if(gameComplete === true){
+
             setForceGameBoardUpdate(!forceGameBoardUpdate)
+            
         }
+
         setGameComplete(false);
     }
 
@@ -111,9 +149,9 @@ export default function Game(props){
 
          let generatedColorCode = [];
 
-        for (let generatedColorCodeInteger = 0; generatedColorCodeInteger < 4; generatedColorCodeInteger++){
+        for (let generatedColorCodeInteger = 0; generatedColorCodeInteger < numberOfHolesPerGuess; generatedColorCodeInteger++){
 
-            let randomInteger = Math.floor(Math.random() * 6)
+            let randomInteger = Math.floor(Math.random() * numberOfColors)
 
             switch(randomInteger){
 
@@ -135,6 +173,12 @@ export default function Game(props){
                 case 5:
                     generatedColorCode.push('yellow');
                     break;
+                case 6:
+                    generatedColorCode.push('#FF6600');
+                    break;
+                case 7:
+                    generatedColorCode.push('purple');
+                    break;
             }
         }
 
@@ -146,11 +190,17 @@ export default function Game(props){
 
         <div id="game-div">
 
-            {(!displayInstructions && !gameInProgress) && (
+            {(!displayInstructions && !gameInProgress && !gameComplete) && (
 
                 <>
                     <div className='fit-content mx-auto my-2'>
-                        <button onClick={playGame}>Play</button>
+                        <button onClick={async () => {await playGame("regular")}}>Play Mastermind</button>
+                    </div>
+                    <div className='fit-content mx-auto my-2'>
+                        <button onClick={async () => {await playGame("super")}}>Play Super Mastermind</button>
+                    </div>
+                    <div className='fit-content mx-auto my-2'>
+                        <button onClick={async () => {await playGame("mini")}}>Play Mini Mastermind</button>
                     </div>
                     <div className='fit-content mx-auto my-2'>
                         <Link to="/instructions" onClick={toggleInstructions}>
@@ -163,11 +213,17 @@ export default function Game(props){
 
             )}
             {displayInstructions && (<Instructions onBackButtonClick={toggleInstructions}/>)} 
-            {(gameInProgress || gameComplete) && (<GameBoard onGuess={handleGuess} onGameComplete={handleGameComplete} forceUpdate={forceGameBoardUpdate} calculatedGuessData={blackWhitePegs} ref={childRef} />)}
+            {(gameInProgress || gameComplete) && 
+            (<GameBoard gameType={gameType} 
+                        onGuess={handleGuess} 
+                        onGameComplete={handleGameComplete} 
+                        forceUpdate={forceGameBoardUpdate} 
+                        calculatedGuessData={blackWhitePegs} 
+                        ref={childRef} />)}
             {gameComplete && (
                 <>
                     <div className='fit-content mx-auto my-2'>
-                        <button onClick={playGame}>Play Again</button>
+                        <button onClick={async () => {await playGame(gameType)}}>Play Again</button>
                     </div>
                     <div className='fit-content mx-auto my-2'>
                         <button onClick={quit}>Quit</button>
