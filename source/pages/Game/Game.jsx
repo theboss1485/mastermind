@@ -1,14 +1,17 @@
 
 
 import Instructions from '../Instructions/Instructions';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import './Game.css'
 
 import React, { useState, useRef, useEffect } from 'react';
 import {Link} from 'react-router-dom';
-import GameBoard from '../../components/GameBoard/GameBoardAndColorPicker';
+import GameBoardAndColorPicker from '../../components/GameBoard/GameBoardAndColorPicker';
+import { updateGameType } from '../../../store/reducers/slices/dynamicSlice';
 
 export default function Game(props){
+
+    const dispatch = useDispatch();
 
     const childRef = useRef();
 
@@ -17,57 +20,35 @@ export default function Game(props){
     const [gameComplete, setGameComplete] = useState(false);
     const [colorCode, setColorCode] = useState([]);
     const [blackWhitePegs, setBlackWhitePegs] = useState(null);
-    const [gameType, setGameType] = useState(null);
+    const gameType = useSelector(state => state.dynamic.gameTypeArray ? state.dynamic.gameTypeArray[0] : null);
     const [forceGameBoardUpdate, setForceGameBoardUpdate] = useState(false)
-    const [numberOfGuesses, setNumberOfGuesses] = useState(null);
-    const [numberOfColors, setNumberOfColors] = useState(null);
-    const [numberOfHolesPerGuess, setNumberOfHolesPerGuess] = useState(null);
+    const numberOfHolesPerGuessArray = useSelector(state => state.static.numberOfHolesPerGuess);
+    const numberOfGuessesArray = useSelector(state => state.static.numberOfGuesses);
+    const numberOfColorsArray = useSelector(state => state.static.numberOfColors);
 
-    const [stateUpdates, setStateUpdates] = useState(0)
-    const numberOfGuessesArray = useSelector(state => state.numberOfGuesses);
-    const numberOfColorsArray = useSelector(state => state.numberOfColors);
-    const numberOfHolesPerGuessArray = useSelector(state => state.numberOfHolesPerGuess);
+    const gameTypeString = useSelector(state => state.dynamic.gameTypeArray ? state.dynamic.gameTypeArray[1] : "Mastermind");
 
     useEffect(() => {
 
-        setNumberOfGuesses(numberOfGuessesArray[gameType])
-        setNumberOfColors(numberOfColorsArray[gameType])
-        setNumberOfHolesPerGuess(numberOfHolesPerGuessArray[gameType])
-        
+        setColorCode(generateColorCode());
 
     }, [gameType])
-
-    useEffect(() => {
-
-        setStateUpdates(stateUpdates + 1)
-    }, [numberOfGuesses, numberOfColors, numberOfHolesPerGuess]) 
-
-    useEffect(() => {
-
-        if(stateUpdates === 3){
-
-            generateColorCode();
-        }
-
-    }, [stateUpdates])
-
-
-    
 
     const toggleInstructions = () => {
 
         if(displayInstructions){
 
             setDisplayInstructions(false);
+
         } else if (!displayInstructions){
 
-            setDisplayInstructions(true)
+            setDisplayInstructions(true);
         }
     }
 
     const handleGuess = async (guess, guessCounter) => {
 
-        if(guess.includes('unset')){
+        if(guess.includes('black')){
 
             await childRef.current.flashCircles('darkred', guess);
 
@@ -108,12 +89,12 @@ export default function Game(props){
     
             setBlackWhitePegs({correctColorCorrectPosition: correctColorCorrectPosition, correctColorIncorrectPosition: correctColorIncorrectPosition})
 
-            if(correctColorCorrectPosition === numberOfHolesPerGuess){
+            if(correctColorCorrectPosition === numberOfHolesPerGuessArray[gameType]){
 
                 await childRef.current.flashCircles('green', null, true);
                 childRef.current.drawActualCodeCircles(null, colorCode);
 
-            } else if (guessCounter === numberOfGuesses - 1 && correctColorCorrectPosition !== numberOfHolesPerGuess){
+            } else if (guessCounter === numberOfGuessesArray[gameType] - 1 && correctColorCorrectPosition !== numberOfHolesPerGuessArray[gameType]){
 
                 await childRef.current.flashCircles('darkred', null, true);
                 childRef.current.drawActualCodeCircles(null, colorCode);
@@ -127,10 +108,24 @@ export default function Game(props){
         setGameInProgress(false);
     }
 
-    const playGame = async (gameType) => {
+    const playGame = async (gameTypeLocal) => {
 
-        setGameType(gameType)
+        if(gameType === gameTypeLocal){
+
+            setColorCode(generateColorCode());
+        
+        } else {
+
+            dispatch(updateGameType(
+            
+                {
+                    gameType: gameTypeLocal 
+                }
+            ))
+        }
+
         setGameInProgress(true);
+
         if(gameComplete === true){
 
             setForceGameBoardUpdate(!forceGameBoardUpdate)
@@ -142,16 +137,24 @@ export default function Game(props){
 
     const quit = () => {
 
+        dispatch(updateGameType(
+            
+            {
+                gameType: "none"
+            }
+        ))
+
         setGameComplete(false);
+        setGameInProgress(false);
     }
 
     const generateColorCode = () => {
 
          let generatedColorCode = [];
 
-        for (let generatedColorCodeInteger = 0; generatedColorCodeInteger < numberOfHolesPerGuess; generatedColorCodeInteger++){
+        for (let generatedColorCodeInteger = 0; generatedColorCodeInteger < numberOfHolesPerGuessArray[gameType]; generatedColorCodeInteger++){
 
-            let randomInteger = Math.floor(Math.random() * numberOfColors)
+            let randomInteger = Math.floor(Math.random() * numberOfColorsArray[gameType])
 
             switch(randomInteger){
 
@@ -174,7 +177,7 @@ export default function Game(props){
                     generatedColorCode.push('yellow');
                     break;
                 case 6:
-                    generatedColorCode.push('#FF6600');
+                    generatedColorCode.push('orange');
                     break;
                 case 7:
                     generatedColorCode.push('purple');
@@ -182,27 +185,26 @@ export default function Game(props){
             }
         }
 
-        setColorCode(generatedColorCode)
+        return generatedColorCode
     }
 
     return (
         
-
         <div id="game-div">
 
             {(!displayInstructions && !gameInProgress && !gameComplete) && (
 
                 <>
-                    <div className='fit-content mx-auto my-2'>
+                    <div className='fit-content mx-auto py-2'>
                         <button onClick={async () => {await playGame("regular")}}>Play Mastermind</button>
                     </div>
-                    <div className='fit-content mx-auto my-2'>
+                    <div className='fit-content mx-auto py-2'>
                         <button onClick={async () => {await playGame("super")}}>Play Super Mastermind</button>
                     </div>
-                    <div className='fit-content mx-auto my-2'>
+                    <div className='fit-content mx-auto py-2'>
                         <button onClick={async () => {await playGame("mini")}}>Play Mini Mastermind</button>
                     </div>
-                    <div className='fit-content mx-auto my-2'>
+                    <div className='fit-content mx-auto py-2'>
                         <Link to="/instructions" onClick={toggleInstructions}>
                             <button>
                                 Instructions
@@ -210,27 +212,35 @@ export default function Game(props){
                         </Link>
                     </div>
                 </>
-
             )}
+            
             {displayInstructions && (<Instructions onBackButtonClick={toggleInstructions}/>)} 
-            {(gameInProgress || gameComplete) && 
-            (<GameBoard gameType={gameType} 
+            {(gameComplete || gameInProgress) && (
+                <>
+                    <GameBoardAndColorPicker 
+                        gameType={gameType} 
+                        colorCode={colorCode}
                         onGuess={handleGuess} 
                         onGameComplete={handleGameComplete} 
                         forceUpdate={forceGameBoardUpdate} 
                         calculatedGuessData={blackWhitePegs} 
-                        ref={childRef} />)}
-            {gameComplete && (
-                <>
-                    <div className='fit-content mx-auto my-2'>
-                        <button onClick={async () => {await playGame(gameType)}}>Play Again</button>
-                    </div>
-                    <div className='fit-content mx-auto my-2'>
-                        <button onClick={quit}>Quit</button>
-                    </div>
-                </>
-                
+                        ref={childRef} />
+                </>     
             )}
+
+            {gameComplete && (
+                <div className='fit-content mx-auto py-2'>
+                    <button onClick={async () => {await playGame(gameType)}}>Play {gameTypeString} Again</button>
+                </div>
+            )}
+
+            {(gameComplete || gameInProgress) && (
+
+                <div className='fit-content mx-auto py-2'>
+                    <button onClick={quit}>Quit</button>
+                </div> 
+            )}  
+                
         </div>
     )
 }
