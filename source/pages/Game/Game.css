@@ -8,3 +8,63 @@
 
     width: fit-content
 }
+
+.btn-green {
+
+    background-color: #03c12c;
+    color:aliceblue
+}
+
+.btn-green:hover {
+
+    background-color: #37ab50;
+    color:aliceblue
+}
+
+.btn-yellow {
+
+    background-color: #fafa0e;
+    color:rgb(77, 87, 97)
+}
+
+.btn-yellow:hover {
+
+    background-color: #f0f024;
+    color:rgb(77, 87, 97)
+}
+
+.btn-red {
+
+    background-color: #cb0909;
+    color:aliceblue
+}
+
+.btn-red:hover {
+
+    background-color: #990d0d;
+    color:aliceblue
+}
+
+.btn-bright-red {
+
+    background-color: #ff0000;
+    color:rgb(230, 238, 245)
+}
+
+.btn-bright-red:hover {
+
+    background-color: #d70000;
+    color:rgb(230, 238, 245)
+}
+
+.btn-blue {
+
+    background-color: #1b95e1;
+    color:rgb(230, 238, 245)
+}
+
+.btn-blue:hover {
+
+    background-color: #1d85c5;
+    color:rgb(230, 238, 245)
+}

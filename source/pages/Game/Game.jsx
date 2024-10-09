@@ -27,6 +27,7 @@ export default function Game(props){
     const numberOfColorsArray = useSelector(state => state.static.numberOfColors);
 
     const gameTypeString = useSelector(state => state.dynamic.gameTypeArray ? state.dynamic.gameTypeArray[1] : "Mastermind");
+    const gameTypebuttonClass = useSelector(state => state.dynamic.gameTypeArray ? state.dynamic.gameTypeArray[2] : null);
 
     useEffect(() => {
 
@@ -196,17 +197,17 @@ export default function Game(props){
 
                 <>
                     <div className='fit-content mx-auto py-2'>
-                        <button onClick={async () => {await playGame("regular")}}>Play Mastermind</button>
+                        <button className='btn btn-green' onClick={async () => {await playGame("regular")}}>Play Mastermind</button>
                     </div>
                     <div className='fit-content mx-auto py-2'>
-                        <button onClick={async () => {await playGame("super")}}>Play Super Mastermind</button>
+                        <button className='btn btn-yellow' onClick={async () => {await playGame("super")}}>Play Super Mastermind</button>
                     </div>
                     <div className='fit-content mx-auto py-2'>
-                        <button onClick={async () => {await playGame("mini")}}>Play Mini Mastermind</button>
+                        <button className='btn btn-red' onClick={async () => {await playGame("mini")}}>Play Mini Mastermind</button>
                     </div>
                     <div className='fit-content mx-auto py-2'>
                         <Link to="/instructions" onClick={toggleInstructions}>
-                            <button>
+                            <button className='btn btn-blue'>
                                 Instructions
                             </button>
                         </Link>
@@ -230,14 +231,14 @@ export default function Game(props){
 
             {gameComplete && (
                 <div className='fit-content mx-auto py-2'>
-                    <button onClick={async () => {await playGame(gameType)}}>Play {gameTypeString} Again</button>
+                    <button className={gameTypebuttonClass} onClick={async () => {await playGame(gameType)}}>Play {gameTypeString} Again</button>
                 </div>
             )}
 
             {(gameComplete || gameInProgress) && (
 
                 <div className='fit-content mx-auto py-2'>
-                    <button onClick={quit}>Quit</button>
+                    <button className='btn btn-bright-red' onClick={quit}>Quit</button>
                 </div> 
             )}  
                 
