@@ -599,10 +599,10 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
 
             let questionMarkY = guessCounter > 0 ? ((questionMarkYBaseValue1 + (gapBetweenGuessHoleCenters * guessCounter)) + yOffset) : (questionMarkYBaseValue1 + yOffset);
             let questionMarkX = questionMarkGlobalX;
-            ctx. fillColor = 'red'
-            ctx.beginPath(); // Start a new path
-            ctx.rect(questionMarkX, questionMarkY, questionMarkWidth, questionMarkHeight); // Add a rectangle to the current path
-            ctx.stroke(); // Render the path
+            // ctx. fillColor = 'red'
+            // ctx.beginPath(); // Start a new path
+            // ctx.rect(questionMarkX, questionMarkY, questionMarkWidth, questionMarkHeight); // Add a rectangle to the current path
+            // ctx.stroke(); // Render the path
 
             if((x >= questionMarkX) && (x <= (questionMarkX + questionMarkWidth)) && (y >= questionMarkY) && (y <= (questionMarkY + questionMarkHeight))){
 
