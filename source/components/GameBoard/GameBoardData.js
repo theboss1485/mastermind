@@ -1,6 +1,6 @@
 export const gameBoardData = {
 
-    canvasHeight:/*.............*/{"mini": 400,   "regular": 700,  "super": 575  },
+    //canvasHeight:/*.............*/{"mini": 400,   "regular": 700,  "super": 575  },
     clueHoleRadius:/*...........*/{"mini": 7,     "regular": 7,    "super": 5    },
     clueHolesInFirstRow:/*......*/{"mini": 2,     "regular": 2,    "super": 3    },
     clueHoleOffeset:/*..........*/{"mini": 27,    "regular": 27,   "super": 20   },
@@ -16,7 +16,7 @@ export const gameBoardData = {
     edgeGuessHoleMargin:/*......*/{"mini": 40,    "regular": 40,   "super": 30   },
     numberOfHolesPerGuess:/*....*/{"mini": 4,     "regular": 4,    "super": 5    },
     questionMarkYBaseValue1:/*..*/{"mini": 26.5,  "regular": 26.5, "super": 16.5 },
-    questionMarkYBaseValue2:/*..*/{"mini": 25,    "regular": 25,   "super": 15   },
+    // questionMarkYBaseValue2:/*..*/{"mini": 25,    "regular": 25,   "super": 15   },
     largeRadiusToGuessHoleXRatio: {"mini": 1.35,  "regular": 1.35, "super": 1.7  },
     largeRadiusToGuessHoleYRatio: {"mini": 0.675, "regular": 0.675,"super": 0.9  },
     yOffset:/*................. */{"mini": 90,    "regular": 90,   "super": 85   }

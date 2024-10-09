@@ -1,35 +1,78 @@
-import React, { useRef, useImperativeHandle, useEffect, useState } from 'react';
+import React, { useRef, createContext, useContext, useImperativeHandle, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import './GameBoardAndColorPicker.css'
 import {gameBoardData} from './GameBoardData';
-const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplete, forceUpdate, gameType}, ref) => {
+const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplete, forceUpdate, colorCode, gameType}, ref) => {
 
-    const numberOfGuesses = useSelector(state => state.numberOfGuesses[gameType]);
-    const numberOfColors = useSelector(state => state.numberOfColors[gameType]);
-    const numberOfHolesPerGuess = useSelector(state => state.numberOfHolesPerGuess[gameType]);
-    const canvasReference = useRef(null);
     const yOffset = gameBoardData.yOffset[gameType]
-    const canvasWidth = 300;
-    const canvasHeight = gameBoardData.canvasHeight[gameType] + yOffset;
-    const largeRadius = gameBoardData.guessHoleRadius[gameType];
-    const clueHoleXIncrementValue = gameBoardData.clueHoleXIncrementValue[gameType]
-    const clueHoleXRow2ResetValue = gameBoardData.clueHoleXRow2ResetValue[gameType]
-    const clueHoleYIncrementValue1 = gameBoardData.clueHoleYIncrementValue1[gameType]
-    const clueHoleYIncrementValue2 = gameBoardData.clueHoleYIncrementValue2[gameType]
-    const colorPickerCircleRadius = gameBoardData.colorPickerCircleRadius[gameType];
-    const edgeGuessHoleMargin = gameBoardData.edgeGuessHoleMargin[gameType];
+    const canvasWidth = 300
+    const numberOfGuesses = useSelector(state => state.static.numberOfGuesses[gameType]);
+    const numberOfColors = useSelector(state => state.static.numberOfColors[gameType]);
+    const numberOfHolesPerGuess = useSelector(state => state.static.numberOfHolesPerGuess[gameType]);
+    const canvasHeight = yOffset + 
+                         (gameBoardData.edgeGuessHoleMargin[gameType] * 2)+
+                         (gameBoardData.guessHoleRadius[gameType] * 2) +
+                         (gameBoardData.gapBetweenGuessHoleCenters[gameType] * (numberOfGuesses - 1)) + 30
+
+    const findScaleFactor = () => {
+
+        let scaleFactor = 0;
+
+        if(window.screen.width > canvasWidth * 2.15 && window.screen.height > canvasHeight * 2.15){
+            
+            scaleFactor = 1.5
+
+        } else if (window.screen.width > canvasWidth * 1.5 && window.screen.height > canvasHeight * 1.5){
+
+            scaleFactor = 1.25
+
+        } else {
+
+            scaleFactor = 1
+        }
+
+        return scaleFactor;
+    }
+
+    useEffect(() => {
+
+        const handleResize = () => {
+            
+            setScaleFactor(findScaleFactor());
+        };
+
+        window.addEventListener('resize', handleResize);
+
+        // // Cleanup function to remove the event listener
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []); // Empty dependency array means this runs once on mount
+
+
+    
+    const [scaleFactor, setScaleFactor] = useState(null)
+
+    const canvasReference = useRef(null);
+    const [scaledCanvasWidth, setScaledCanvasWidth] = useState(null)
+    const [scaledCanvasHeight, setScaledCanvasHeight] = useState(null) 
+    const [largeRadius, setLargeRadius] = useState(null);
+    const [clueHoleXIncrementValue, setClueHoleXIncrementValue] = useState(null);
+    const [clueHoleXRow2ResetValue, setClueHoleXRow2ResetValue] = useState(null);
+    const [clueHoleYIncrementValue1, setClueHoleYIncrementValue1] = useState(null);
+    const [clueHoleYIncrementValue2, setClueHoleYIncrementValue2] = useState(null);
+    const [colorPickerCircleRadius, setColorPickerCircleRadius] = useState(null); 
+    const [edgeGuessHoleMargin, setEdgeGuessHoleMargin] = useState(null);
     const largeRadiusToGuessHoleXRatio = gameBoardData.largeRadiusToGuessHoleXRatio[gameType]
     const largeRadiusToGuessHoleYRatio = gameBoardData.largeRadiusToGuessHoleYRatio[gameType]
-    const clueHoleOffset = gameBoardData.clueHoleOffeset[gameType]
-    const gapBetweenColorCircleCenters = gameBoardData.gapBetweenColorCircleCenters[gameType]
-    const guessHoleCodeCircleNumber = gameBoardData.guessHoleCodeCircleNumber[gameType]
-    const edgeColorCircleMargin = 27.5
-    const questionMarkWidth = 19;
-    const questionMarkHeight = 27;
-    const questionMarkYBaseValue1 = gameBoardData.questionMarkYBaseValue1[gameType]
-    const questionMarkYBaseValue2 = gameBoardData.questionMarkYBaseValue2[gameType]
-    const questionMarkHeightOffset = Math.round((questionMarkHeight * 2) / 27);
-    const gapBetweenGuessHoleCenters = gameBoardData.gapBetweenGuessHoleCenters[gameType]
+    const [clueHoleOffset, setClueHoleOffset] = useState(null);
+    const [gapBetweenColorCircleCenters, setGapBetweenColorCircleCenters] = useState(null);
+    const guessHoleCodeCircleNumber = gameBoardData.guessHoleCodeCircleNumber[gameType];
+    const [edgeColorCircleMargin, setEdgeColorCircleMargin] = useState(null)
+    const [questionMarkWidth, setQuestionMarkWidth] = useState(null)
+    const [questionMarkHeight, setQestionMarkHeight] = useState(null);
+    const [questionMarkYBaseValue1, setQuestionMarkBaseValue1] = useState(null);
+    const [gapBetweenGuessHoleCenters, setGapBetweenGuessHoleCenters] = useState(null);
     const [changeGuessCounter, setChangeGuessCounter] = useState(false);
     const [questionMarkGlobalX, setQuestionMarkGlobalX] = useState(null);
     const [clickedGameHoleIndices, setClickedGameHoleIndices] = useState(null);
@@ -38,44 +81,95 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
     const [questionMarksLoaded, setQuestionMarksLoaded] = useState(false);
     const [guessCounter, setGuessCounter] = useState(0)
     const [flashing, setFlashing] = useState(false)
-    const [playerGuess, setPlayerGuess] = useState(gameType === 'super' ? Array(5).fill('unset') : Array(4).fill('unset'));
+    const [scaleFactorSet, setScaleFactorSet] = useState(false);
+    const [playerGuess, setPlayerGuess] = useState(Array(numberOfHolesPerGuess).fill('black') );
     const [questionMarks] = useState([(() => {const image1 = new Image(); image1.src = '../../public/assets/images/black-question-mark.png'; return image1; })(),
-                                      (() => {const image2 = new Image(); image2.src = '../../public/assets/images/gray-question-mark.png'; return image2;  })()
+                                       (() => {const image2 = new Image(); image2.src = '../../public/assets/images/gray-question-mark.png'; return image2;  })()
     ])
 
-    useImperativeHandle(ref, () => ({flashCircles, drawActualCodeCircles}));
+    const [gameData, setGameData] = useState([])
+
+    const [canvasRendered, setCanvasRendered] = useState(false);
 
     useEffect(() => {
+
+        setGameData([[Array(numberOfHolesPerGuess).fill('black'),[]]])
         
-        const canvas = canvasReference.current;
-        let ctx = canvas.getContext('2d');
+    }, [gameType, forceUpdate])
+
+    useEffect(() => {
+
+        if(gameData.length > 0){
+
+            if((gameData.length === 1) & gameData[0][0].filter(item => item === 'black').length === numberOfHolesPerGuess){
+
+                setScaleFactor(findScaleFactor());
+                if(questionMarksLoaded === false){
         
+                    loadQuestionMarks(questionMarks);
 
-        // Use ctx to draw on the canvas
+                } else {
+
+                    renderEntireCanvas()
+                    setCanvasRendered(true)
+                }
         
-
-        const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
-        gradient.addColorStop(0, 'rgb(166, 90, 36)'); // light brown
-        gradient.addColorStop(1, 'rgb(139, 69, 19)'); // dark brown
-        ctx.fillStyle = gradient;
-        ctx.roundRect(0, yOffset, canvasWidth, canvasHeight - yOffset, 20);
-        ctx.fill();
-
-        ctx.roundRect(0, 0, canvasWidth, 80, 20);
-        ctx.fill();
-
-        drawColorPicker(ctx);
-
-        for(let rowIndex = 0; rowIndex < numberOfGuesses; rowIndex++){
-
-            drawLargeCircleRowAndQuestionMark(ctx, rowIndex, guessCounter)
-
-            drawFourSmallCircles(ctx, rowIndex);
+                setGuessCounter(0);
+            }
         }
 
-        drawActualCodeCircles();
+    }, [gameData])
+    
+    
 
-    }, [questionMarksLoaded, forceUpdate, gameType]);
+    useEffect(() => {
+
+        if(scaleFactor !== null){
+
+            setGapBetweenGuessHoleCenters(gameBoardData.gapBetweenGuessHoleCenters[gameType] * scaleFactor);
+            setQuestionMarkBaseValue1(gameBoardData.questionMarkYBaseValue1[gameType] * scaleFactor);
+            setQestionMarkHeight(27 * scaleFactor);
+            setQuestionMarkWidth(19 * scaleFactor);
+            setEdgeColorCircleMargin(30 * scaleFactor);
+            setGapBetweenColorCircleCenters(gameBoardData.gapBetweenColorCircleCenters[gameType] * scaleFactor);
+            setClueHoleOffset(gameBoardData.clueHoleOffeset[gameType] * scaleFactor);
+            setEdgeGuessHoleMargin(gameBoardData.edgeGuessHoleMargin[gameType] * scaleFactor);
+            setColorPickerCircleRadius(gameBoardData.colorPickerCircleRadius[gameType] * scaleFactor);
+            setClueHoleYIncrementValue2(gameBoardData.clueHoleYIncrementValue2[gameType] * scaleFactor);
+            setClueHoleYIncrementValue1(gameBoardData.clueHoleYIncrementValue1[gameType] * scaleFactor);
+            setClueHoleXRow2ResetValue(gameBoardData.clueHoleXRow2ResetValue[gameType] * scaleFactor);
+            setClueHoleXIncrementValue(gameBoardData.clueHoleXIncrementValue[gameType] * scaleFactor);
+            setLargeRadius(gameBoardData.guessHoleRadius[gameType] * scaleFactor);
+            setScaledCanvasHeight(((canvasHeight - yOffset) * scaleFactor) + yOffset);
+            setScaledCanvasWidth(canvasWidth * scaleFactor);
+            setCanvasRendered(false);
+        }
+
+    }, [scaleFactor])
+
+    const root = document.documentElement
+    root.style.setProperty("--width-value", `${scaledCanvasWidth}px`)
+
+    useImperativeHandle(ref, () => ({flashCircles, drawActualCodeCircles, setGameData, setCanvasRendered}));
+
+    useEffect(() => {
+
+        if(questionMarksLoaded  && scaledCanvasHeight && scaledCanvasWidth){
+            renderEntireCanvas()
+            setCanvasRendered(true)
+        }
+        
+    }, [questionMarksLoaded]);
+
+    useEffect(() => {
+
+        if(canvasRendered === false && questionMarksLoaded){
+
+            renderEntireCanvas();
+            setCanvasRendered(true);
+        }
+
+    }, [canvasRendered]);
 
     useEffect(() => {
 
@@ -123,22 +217,14 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
                     removeCursorClass();
                     document.body.classList.add('purple-cursor');
                     break;
+                default:
+                    removeCursorClass();
             }
 
             const canvas = canvasReference.current;
             let ctx = canvas.getContext('2d');
-            // ctx.lineWidth = 5;
 
             drawColorPicker(ctx);
-
-            let centerX = (edgeColorCircleMargin + (clickedColorHoleIndices * gapBetweenColorCircleCenters));
-            let centerY = 40
-            ctx.lineWidth = 3;
-
-            ctx.beginPath();
-            
-            ctx.arc(centerX, centerY, colorPickerCircleRadius - (ctx.lineWidth * 0.45), 0, 2 * Math.PI);
-            ctx.stroke();
         }
 
     }, [clickedColorHoleIndices])
@@ -162,13 +248,14 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
     useEffect(() => {
 
         let newGuessCounter = guessCounter + 1
+        
         const canvas = canvasReference.current;
         let ctx = canvas.getContext('2d');
 
         let questionMarkX = (edgeGuessHoleMargin + ((numberOfHolesPerGuess - 1) * gapBetweenGuessHoleCenters)) + largeRadius * largeRadiusToGuessHoleXRatio;
         let questionMarkY = (edgeGuessHoleMargin + yOffset + (guessCounter * gapBetweenGuessHoleCenters)) - largeRadius * largeRadiusToGuessHoleYRatio;
 
-        drawFourSmallCircles(ctx, guessCounter, calculatedGuessData);
+        drawFourSmallCircles(ctx, guessCounter, false, false, calculatedGuessData);
         drawQuestionMark(ctx, newGuessCounter, guessCounter, questionMarkX, questionMarkY);
 
         if(guessCounter < (numberOfGuesses - 1) && changeGuessCounter){
@@ -177,10 +264,7 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
 
                 drawLargeCircleRowAndQuestionMark(ctx, newGuessCounter, newGuessCounter);
             }
-            
         }
-
-
 
         if(changeGuessCounter === true){
 
@@ -188,14 +272,12 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
 
                 setGuessCounter(guessCounter + 1);
             }
-            
         }
 
         if(calculatedGuessData){
 
             if(guessCounter === numberOfGuesses - 1 || calculatedGuessData.correctColorCorrectPosition === numberOfHolesPerGuess){
 
-                setGuessCounter(0);
                 onGameComplete();
             }
         }
@@ -203,8 +285,6 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
         setChangeGuessCounter(true);
 
     }, [calculatedGuessData])
-
-
 
     const drawSolidCircle = (ctx, centerX, centerY, radius, fillColor = 'gray', click = false) => {
 
@@ -225,14 +305,34 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
         ctx.fill();
     }
 
-    const drawLargeCircleRowAndQuestionMark = (ctx, rowIndex, passedInGuessCounter) => {
+    const drawLargeCircleRowAndQuestionMark = (ctx, rowIndex, passedInGuessCounter, scaleFactorSet = false) => {
+
+        let fillColor = "gray";
 
         for(let drawLargeCircles = 0; drawLargeCircles <= numberOfHolesPerGuess - 1; drawLargeCircles++){
 
             let centerXLarge = (edgeGuessHoleMargin + (drawLargeCircles * gapBetweenGuessHoleCenters  ));
             let centerYLarge = (edgeGuessHoleMargin + yOffset + (rowIndex * gapBetweenGuessHoleCenters));
 
-            if(rowIndex === passedInGuessCounter){
+            if(scaleFactorSet === true && gameData.length >= rowIndex){
+
+                if(((gameData.length - 1) >= rowIndex) && Array.isArray(gameData[rowIndex][1])){
+
+                    fillColor = gameData[rowIndex][0][drawLargeCircles];
+                } 
+
+                if(fillColor === "green"){
+
+                    fillColor = "#00FF00"
+                
+                } else if (fillColor === "orange"){
+
+                    fillColor = "#FF6600"
+                }
+
+                drawSolidCircle(ctx, centerXLarge, centerYLarge, largeRadius, fillColor)
+                
+            } else if(rowIndex === passedInGuessCounter){
 
                 drawSolidCircle(ctx, centerXLarge, centerYLarge, largeRadius, 'black')
 
@@ -241,18 +341,15 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
                 drawSolidCircle(ctx, centerXLarge, centerYLarge, largeRadius, 'gray')
             }
 
-            
-
             if(drawLargeCircles === numberOfHolesPerGuess - 1){
 
                 let questionMarkX = centerXLarge + largeRadius * largeRadiusToGuessHoleXRatio;
                 let questionMarkY = centerYLarge - largeRadius * largeRadiusToGuessHoleYRatio;
                 
 
-                if(drawLargeCircles === (numberOfHolesPerGuess - 1) && rowIndex === guessCounter && questionMarkGlobalX === null){
+                if(drawLargeCircles === (numberOfHolesPerGuess - 1) && rowIndex === guessCounter){
 
                     setQuestionMarkGlobalX(questionMarkX);
-                    //setQuestionMarkYBaseValue(questionMarkY - yOffset);
                 }
 
                 drawQuestionMark(ctx, rowIndex, passedInGuessCounter, questionMarkX, questionMarkY);
@@ -264,17 +361,23 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
 
         if(rowIndex === passedInGuessCounter){
 
-            ctx.drawImage(questionMarks[0], questionMarkX, questionMarkY)
+            ctx.drawImage(questionMarks[0], questionMarkX, questionMarkY, questionMarkWidth, questionMarkHeight)
+            // ctx.rect(questionMarkX, questionMarkY, questionMarkWidth, questionMarkHeight)
+            // ctx.stroke();
         
         } else {
 
-            ctx.drawImage(questionMarks[1], questionMarkX, questionMarkY)
+            ctx.drawImage(questionMarks[1], questionMarkX, questionMarkY, questionMarkWidth, questionMarkHeight)
         }
     }
 
-    const drawFourSmallCircles = (ctx, rowIndex, blackWhitePegs = null) => {
+    const drawFourSmallCircles = (ctx, rowIndex, scaleFactorSet, fullRedraw, blackWhitePegs = null) => {
 
-        let centerXSmall = 250;
+        let clueHoleCounter = 0
+
+        let blackWhitePegData = []
+
+        let centerXSmall = 250 * scaleFactor;
         let centerYSmall = (clueHoleOffset + yOffset) + (gapBetweenGuessHoleCenters * rowIndex);
 
         for(let drawSmallCirclesY = 0; drawSmallCirclesY <= 1; drawSmallCirclesY++){
@@ -286,25 +389,38 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
                     continue;
                 }
 
-                let clueHoleRadius = gameBoardData.clueHoleRadius[gameType];
+                let clueHoleRadius = gameBoardData.clueHoleRadius[gameType] * scaleFactor;
 
                 if(blackWhitePegs !== null){
 
-                    if(blackWhitePegs.correctColorCorrectPosition < numberOfHolesPerGuess && blackWhitePegs.correctColorCorrectPosition > 0){
+                    if(blackWhitePegs.correctColorCorrectPosition <= numberOfHolesPerGuess && blackWhitePegs.correctColorCorrectPosition > 0){
 
                         drawSolidCircle(ctx, centerXSmall, centerYSmall, clueHoleRadius, 'black');
-                        blackWhitePegs.correctColorCorrectPosition--;
+                        blackWhitePegData.push("black");
 
-                    } else if (blackWhitePegs.correctColorCorrectPosition === numberOfHolesPerGuess){
+                        if (blackWhitePegs.correctColorCorrectPosition < numberOfHolesPerGuess){
 
-                        drawSolidCircle(ctx, centerXSmall, centerYSmall, clueHoleRadius, 'black');
-                    } 
-                    
-                    else if(blackWhitePegs.correctColorIncorrectPosition > 0){
+                            blackWhitePegs.correctColorCorrectPosition--;
+                        }
+
+                    }  else if(blackWhitePegs.correctColorIncorrectPosition > 0){
 
                         drawSolidCircle(ctx, centerXSmall, centerYSmall, clueHoleRadius, 'white');
                         blackWhitePegs.correctColorIncorrectPosition--;
-                    }
+                        blackWhitePegData.push("white");
+                    
+                    } else {
+
+                        blackWhitePegData.push("gray");
+                    } 
+
+                } else if(scaleFactorSet === true && gameData.length > rowIndex + 1){
+
+
+                    let fillColor = gameData[rowIndex][1][clueHoleCounter];
+                    clueHoleCounter++
+
+                    drawSolidCircle(ctx, centerXSmall, centerYSmall, clueHoleRadius, fillColor);
 
                 } else {
 
@@ -326,6 +442,11 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
 
             centerXSmall = clueHoleXRow2ResetValue;
             
+        }
+
+        if(fullRedraw === false  && gameData.length > 0){
+
+            updateGameData([], blackWhitePegData)
         }
     }
 
@@ -367,6 +488,16 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
             
             drawSolidCircle(ctx, centerXLarge, centerYLarge, colorPickerCircleRadius, fillStyle)
         }
+
+        if(clickedColorHoleIndices !== -1  && clickedColorHoleIndices !== null){
+
+            let centerX = (edgeColorCircleMargin + (clickedColorHoleIndices * gapBetweenColorCircleCenters));
+            let centerY = 40
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, colorPickerCircleRadius - (ctx.lineWidth * 0.45), 0, 2 * Math.PI);
+            ctx.stroke();
+        }
     }
 
     const removeCursorClass = () => {
@@ -384,11 +515,18 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
         let loadedQuestionMarks = 0;
     
         await Promise.all(questionMarks.map(questionMark => {
+            
             return new Promise(resolve => {
-                questionMark.onload = function () {
+                // Check if the image is already loaded
+                if (questionMark.complete) {
                     loadedQuestionMarks++;
                     resolve();
-                };
+                } else {
+                    questionMark.onload = function () {
+                        loadedQuestionMarks++;
+                        resolve();
+                    };
+                }
             });
         }));
     
@@ -399,75 +537,90 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
 
     const canvasClicked = (event) => {
 
-        const canvas = canvasReference.current;
-        let ctx = canvas.getContext('2d');
+        if(guessCounter < numberOfGuesses){
 
-        const canvasRect = canvas.getBoundingClientRect();
-        const x = event.clientX - canvasRect.left;
-        const y = event.clientY - canvasRect.top;
+            const canvas = canvasReference.current;
+            let ctx = canvas.getContext('2d');
 
-        // Check if the click is inside any of the large holes
+            const canvasRect = canvas.getBoundingClientRect();
+            const x = event.clientX - canvasRect.left;
+            const y = event.clientY - canvasRect.top;
 
-        for(let colorHoleCounter = 0; colorHoleCounter <= numberOfColors - 1; colorHoleCounter++){
+            // Check if the click is inside any of the large holes
 
-            const holeX = edgeColorCircleMargin + (colorHoleCounter % numberOfColors) * gapBetweenColorCircleCenters
-            const holeY = 40
+            for(let colorHoleCounter = 0; colorHoleCounter <= numberOfColors - 1; colorHoleCounter++){
 
-            if (Math.pow(x - holeX, 2) + Math.pow(y - holeY, 2) <= Math.pow(colorPickerCircleRadius, 2)) {
+                const holeX = edgeColorCircleMargin + (colorHoleCounter % numberOfColors) * gapBetweenColorCircleCenters
+                const holeY = 40
 
-                setClickedColorHoleIndices(colorHoleCounter);
-                break;
-            }
-        }
+                if (Math.pow(x - holeX, 2) + Math.pow(y - holeY, 2) <= Math.pow(colorPickerCircleRadius, 2)) {
 
-        for (let gameHoleCounter = 0; gameHoleCounter <= (numberOfHolesPerGuess - 1); gameHoleCounter++) {
-
-            const holeX = edgeGuessHoleMargin + (gameHoleCounter * gapBetweenGuessHoleCenters);
-            const holeY = yOffset + edgeGuessHoleMargin + (guessCounter * gapBetweenGuessHoleCenters);
-
-            if ((Math.pow(x - holeX, 2) + Math.pow(y - holeY, 2) <= Math.pow(largeRadius, 2)) && flashing === false ) {
-
-                setClickedGameHoleIndices([gameHoleCounter, guessCounter]);
-
-                if(gameBoardCircleFillColor !== null){
-
-                    setPlayerGuess(previousColors => {
-
-                        let newColors = [...previousColors];
-    
-                        newColors[gameHoleCounter] = gameBoardCircleFillColor === '#00FF00' ? 'green': gameBoardCircleFillColor
-                        
-                        return newColors
-                    })
+                    setClickedColorHoleIndices(colorHoleCounter);
+                    break;
                 }
             }
-        }
 
+            for (let gameHoleCounter = 0; gameHoleCounter <= (numberOfHolesPerGuess - 1); gameHoleCounter++) {
 
+                const holeX = edgeGuessHoleMargin + (gameHoleCounter * gapBetweenGuessHoleCenters);
+                const holeY = yOffset + edgeGuessHoleMargin + (guessCounter * gapBetweenGuessHoleCenters);
 
-        let questionMarkY = guessCounter > 0 ? ((questionMarkYBaseValue1 + (questionMarkYBaseValue2 * guessCounter)) + ((questionMarkHeight - questionMarkHeightOffset) * guessCounter) + yOffset) : (questionMarkYBaseValue1 + yOffset);
-        let questionMarkX = questionMarkGlobalX;
-        ctx. fillColor = 'red'
-        ctx.beginPath(); // Start a new path
-        ctx.rect(questionMarkX, questionMarkY, questionMarkWidth, questionMarkHeight); // Add a rectangle to the current path
-        ctx.stroke(); // Render the path
+                if ((Math.pow(x - holeX, 2) + Math.pow(y - holeY, 2) <= Math.pow(largeRadius, 2)) && flashing === false ) {
 
-        if((x >= questionMarkX) && (x <= (questionMarkX + questionMarkWidth)) && (y >= questionMarkY) && (y <= (questionMarkY + questionMarkHeight))){
+                    setClickedGameHoleIndices([gameHoleCounter, guessCounter]);
 
-            onGuess(playerGuess, guessCounter);
-            if(playerGuess.includes('unset') === false && guessCounter < 11){
+                    if(gameBoardCircleFillColor !== null){
 
-                if(gameType === "super"){
+                        setPlayerGuess(() => {
 
-                    setPlayerGuess(['unset', 'unset', 'unset', 'unset', 'unset']);
+                            let newColors = [...playerGuess];
 
-                } else {
+                            if(gameBoardCircleFillColor === '#00FF00'){
 
-                    setPlayerGuess(['unset', 'unset', 'unset', 'unset'])
+                                newColors[gameHoleCounter] = 'green';
+                            
+                            } else if (gameBoardCircleFillColor === '#FF6600'){
+
+                                newColors[gameHoleCounter] = 'orange';
+                            }
+
+                            else {
+
+                                newColors[gameHoleCounter] = gameBoardCircleFillColor
+                            }
+                            
+                            updateGameData(newColors, ["none"])
+
+                            return newColors
+                        })
+                    }
                 }
             }
+
+            let questionMarkY = guessCounter > 0 ? ((questionMarkYBaseValue1 + (gapBetweenGuessHoleCenters * guessCounter)) + yOffset) : (questionMarkYBaseValue1 + yOffset);
+            let questionMarkX = questionMarkGlobalX;
+            ctx. fillColor = 'red'
+            ctx.beginPath(); // Start a new path
+            ctx.rect(questionMarkX, questionMarkY, questionMarkWidth, questionMarkHeight); // Add a rectangle to the current path
+            ctx.stroke(); // Render the path
+
+            if((x >= questionMarkX) && (x <= (questionMarkX + questionMarkWidth)) && (y >= questionMarkY) && (y <= (questionMarkY + questionMarkHeight))){
+
+                onGuess(playerGuess, guessCounter);
+                if(playerGuess.includes('black') === false && guessCounter < (numberOfGuesses - 1)){
+
+                    if(gameType === "super"){
+
+                        setPlayerGuess(['black', 'black', 'black', 'black', 'black']);
+
+                    } else {
+
+                        setPlayerGuess(['black', 'black', 'black', 'black'])
+                    }
+                }
+            }   
         }
-    };
+    }
 
     const flashCircles = async (flashColor, guess = null, codeCircles = false) => {
 
@@ -482,7 +635,7 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
 
                 for(let counter = 0; counter < guess.length; counter++){
 
-                    if(guess[counter] === 'unset'){
+                    if(guess[counter] === 'black'){
         
                         let centerX = (edgeGuessHoleMargin + (counter * gapBetweenGuessHoleCenters))
                         let centerY = (edgeGuessHoleMargin + yOffset + (guessCounter * gapBetweenGuessHoleCenters))
@@ -503,7 +656,7 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
 
                 for(let counter2 = 0; counter2 < guess.length; counter2++){
     
-                    if(guess[counter2] === 'unset'){
+                    if(guess[counter2] === 'black'){
         
                         let centerX = (edgeGuessHoleMargin + (counter2 * gapBetweenGuessHoleCenters));
                         let centerY = (edgeGuessHoleMargin + yOffset + (guessCounter * gapBetweenGuessHoleCenters));
@@ -523,6 +676,39 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
         setFlashing(false) 
     }
 
+    const updateGameData = (color, blackWhitePegs) => {
+
+        let archive = false
+
+        const updatedColor = color.length !== 0 ? color : gameData[guessCounter][0];
+        const updatedBlackWhitePegs = blackWhitePegs[0] !== "none" ? blackWhitePegs : gameData[guessCounter][1];
+    
+        const newGameData = guessCounter === 0 
+            ? [[updatedColor, updatedBlackWhitePegs]]
+            : [
+                ...gameData.slice(0, gameData.length - 1),
+                [updatedColor,
+                updatedBlackWhitePegs]
+              ];
+
+        if(blackWhitePegs[0] !== "none" && (guessCounter < numberOfGuesses - 1) && blackWhitePegs.filter(item => item === 'black').length < numberOfHolesPerGuess){
+
+            newGameData.push([Array(numberOfHolesPerGuess).fill('black'), []]);
+        }
+
+        if((blackWhitePegs.filter(item => item === 'black').length === numberOfHolesPerGuess) || (guessCounter === numberOfGuesses - 1) && (blackWhitePegs[0] !== "none")){
+
+            newGameData.push(colorCode);
+            setGuessCounter(numberOfGuesses);
+            setClickedColorHoleIndices(-1);
+        }
+        
+        if(archive === false){
+
+            setGameData(newGameData);
+        }
+    }
+
     const sleep = async (millisecondDelay) => {
 
         await new Promise(resolve => setTimeout(resolve, millisecondDelay));
@@ -533,8 +719,8 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
         const canvas = canvasReference.current;
         let ctx = canvas.getContext('2d');
 
-        let codeCircleX = ((canvasWidth / 2) - (guessHoleCodeCircleNumber * gapBetweenGuessHoleCenters))
-        let codeCircleY = canvasHeight - 35
+        let codeCircleX = ((scaledCanvasWidth / 2) - (guessHoleCodeCircleNumber * gapBetweenGuessHoleCenters))
+        let codeCircleY = scaledCanvasHeight - edgeGuessHoleMargin
 
         for(let drawActualCodeCircles = 0; drawActualCodeCircles <= (numberOfHolesPerGuess - 1); drawActualCodeCircles++){
 
@@ -560,11 +746,49 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
         }
     }
 
-    loadQuestionMarks(questionMarks);
+    const renderEntireCanvas = () => {
+
+        const canvas = canvasReference.current;
+        let ctx = canvas.getContext('2d');
+        
+        canvas.width = scaledCanvasWidth
+        canvas.height = scaledCanvasHeight
+        
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+        gradient.addColorStop(0, 'rgb(166, 90, 36)'); // light brown
+        gradient.addColorStop(1, 'rgb(139, 69, 19)'); // dark brown
+        ctx.fillStyle = gradient;
+        ctx.roundRect(0, yOffset, scaledCanvasWidth, (scaledCanvasHeight - (yOffset)), 20);
+        ctx.fill();
+
+        ctx.roundRect(0, 0, scaledCanvasWidth, 80, 20);
+        ctx.fill();
+
+        drawColorPicker(ctx);
+
+        for(let rowIndex = 0; rowIndex < numberOfGuesses; rowIndex++){
+
+            drawLargeCircleRowAndQuestionMark(ctx, rowIndex, guessCounter, scaleFactorSet)
+
+            drawFourSmallCircles(ctx, rowIndex, scaleFactorSet, true);
+        }
+
+        if(gameData[gameData.length - 1].length === numberOfHolesPerGuess){
+
+            drawActualCodeCircles(null, gameData[gameData.length - 1]);
+
+        } else {
+
+            drawActualCodeCircles()
+        }
+
+        
+        setScaleFactorSet(true);
+    }
 
     return (
 
-        <canvas className="my-3 centered" onClick={(playerGuess) => canvasClicked(playerGuess)} ref={canvasReference} width={canvasWidth} height={canvasHeight} />
+        <canvas className="my-3 centered" onClick={(playerGuess) => canvasClicked(playerGuess)} ref={canvasReference} width={scaledCanvasWidth} height={scaledCanvasHeight} />
     )
 })
 
