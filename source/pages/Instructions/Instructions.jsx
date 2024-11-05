@@ -13,9 +13,9 @@ export default function Instructions({onBackButtonClick}){
                 represent the number of correct colors you have in incorrect positions.  The game ends when you have either figured out the correct 
                 color combination or made 10 guesses. 
             </p>
-            <div className='fit-content mx-auto my-2'>
+            <div className='fit-content mx-auto py-2'>
                 <Link to="/instructions" onClick={onBackButtonClick}>
-                    <button>
+                    <button className='btn btn-teal'>
                         Go Back
                     </button>
                 </Link>

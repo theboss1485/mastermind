@@ -29,6 +29,12 @@ export default function Game(props){
     const gameTypeString = useSelector(state => state.dynamic.gameTypeArray ? state.dynamic.gameTypeArray[1] : "Mastermind");
     const gameTypebuttonClass = useSelector(state => state.dynamic.gameTypeArray ? state.dynamic.gameTypeArray[2] : null);
 
+    const standardSound = new Audio('../../../public/assets/sounds/standardSound.wav');
+    const superSound = new Audio('../../../public/assets/sounds/superSound.wav');
+    const miniSound = new Audio('../../../public/assets/sounds/miniSound.wav');
+    const instructionsSound = new Audio('../../../public/assets/sounds/instructionsSound.wav');
+    const mainMenuSound = new Audio('../../../public/assets/sounds/mainMenuSound.wav');
+
     useEffect(() => {
 
         setColorCode(generateColorCode());
@@ -40,10 +46,12 @@ export default function Game(props){
         if(displayInstructions){
 
             setDisplayInstructions(false);
+            mainMenuSound.play()
 
         } else if (!displayInstructions){
 
             setDisplayInstructions(true);
+            instructionsSound.play();
         }
     }
 
@@ -90,16 +98,16 @@ export default function Game(props){
     
             setBlackWhitePegs({correctColorCorrectPosition: correctColorCorrectPosition, correctColorIncorrectPosition: correctColorIncorrectPosition})
 
-            if(correctColorCorrectPosition === numberOfHolesPerGuessArray[gameType]){
+            // if(correctColorCorrectPosition === numberOfHolesPerGuessArray[gameType]){
 
-                await childRef.current.flashCircles('green', null, true);
-                childRef.current.drawActualCodeCircles(null, colorCode);
+            //     await childRef.current.flashCircles('green', null, true);
+            //     childRef.current.drawActualCodeCircles(null, colorCode);
 
-            } else if (guessCounter === numberOfGuessesArray[gameType] - 1 && correctColorCorrectPosition !== numberOfHolesPerGuessArray[gameType]){
+            // } else if (guessCounter === numberOfGuessesArray[gameType] - 1 && correctColorCorrectPosition !== numberOfHolesPerGuessArray[gameType]){
 
-                await childRef.current.flashCircles('darkred', null, true);
-                childRef.current.drawActualCodeCircles(null, colorCode);
-            }
+            //     await childRef.current.flashCircles('darkred', null, true);
+            //     childRef.current.drawActualCodeCircles(null, colorCode);
+            // }
         }
     }
 
@@ -111,9 +119,23 @@ export default function Game(props){
 
     const playGame = async (gameTypeLocal) => {
 
+        switch(gameTypeLocal){
+
+            case "regular":
+                standardSound.play();
+                break;
+            case "super":
+                superSound.play();
+                break;
+            case "mini":
+                miniSound.play();
+                break;
+        }
+
         if(gameType === gameTypeLocal){
 
             setColorCode(generateColorCode());
+            setBlackWhitePegs(null);
         
         } else {
 
@@ -147,6 +169,7 @@ export default function Game(props){
 
         setGameComplete(false);
         setGameInProgress(false);
+        mainMenuSound.play();
     }
 
     const generateColorCode = () => {
