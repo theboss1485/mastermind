@@ -37,7 +37,7 @@ export default function Game(props){
     const miniSound = new Audio('../../../public/assets/sounds/miniSound.wav');
     const instructionsSound = new Audio('../../../public/assets/sounds/instructionsSound.wav');
     const mainMenuSound = new Audio('../../../public/assets/sounds/mainMenuSound.wav');
-    const ahAhAhSound = new Audio('../../../public/assets/sounds/AhAhAhSound.wav');
+    const ahAhAhSound = new Audio('../../../public/assets/sounds/ahAhAhSound.wav');
     const soundsMuted = new Audio('../../../public/assets/sounds/soundsMuted.wav');
     const soundsActivated = new Audio('../../../public/assets/sounds/soundsActivated.wav');
 

@@ -17,8 +17,8 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
     const lowPoppingSound = new Audio('../../../public/assets/sounds/lowPoppingSound.wav');
     const normalPoppingSound = new Audio('../../../public/assets/sounds/normalPoppingSound.wav');
     const highPoppingSound = new Audio('../../../public/assets/sounds/highPoppingSound.wav');
-    const gameOverVictory = new Audio('../../../public/assets/sounds/gameOverVictory2.wav');
-    const gameOverDefeat = new Audio('../../../public/assets/sounds/gameOverDefeat3.wav');
+    const gameOverVictory = new Audio('../../../public/assets/sounds/gameOverVictory.wav');
+    const gameOverDefeat = new Audio('../../../public/assets/sounds/gameOverDefeat.wav');
 
     const findScaleFactor = () => {
 
