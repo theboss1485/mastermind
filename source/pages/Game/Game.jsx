@@ -8,6 +8,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {Link} from 'react-router-dom';
 import GameBoardAndColorPicker from '../../components/GameBoard/GameBoardAndColorPicker';
 import { updateGameType } from '../../../store/reducers/slices/dynamicSlice';
+import playSound from '../../utilities/playSound';
 
 export default function Game(props){
 
@@ -25,9 +26,20 @@ export default function Game(props){
     const numberOfHolesPerGuessArray = useSelector(state => state.static.numberOfHolesPerGuess);
     const numberOfGuessesArray = useSelector(state => state.static.numberOfGuesses);
     const numberOfColorsArray = useSelector(state => state.static.numberOfColors);
+    const [soundsOn, setSoundsOn] = useState(true);
+    const [muteUnmuteString, setMuteUnmuteString] = useState("Mute");
 
     const gameTypeString = useSelector(state => state.dynamic.gameTypeArray ? state.dynamic.gameTypeArray[1] : "Mastermind");
     const gameTypebuttonClass = useSelector(state => state.dynamic.gameTypeArray ? state.dynamic.gameTypeArray[2] : null);
+
+    const standardSound = new Audio('../../../public/assets/sounds/standardSound.wav');
+    const superSound = new Audio('../../../public/assets/sounds/superSound.wav');
+    const miniSound = new Audio('../../../public/assets/sounds/miniSound.wav');
+    const instructionsSound = new Audio('../../../public/assets/sounds/instructionsSound.wav');
+    const mainMenuSound = new Audio('../../../public/assets/sounds/mainMenuSound.wav');
+    const ahAhAhSound = new Audio('../../../public/assets/sounds/ahAhAhSound.wav');
+    const soundsMuted = new Audio('../../../public/assets/sounds/soundsMuted.wav');
+    const soundsActivated = new Audio('../../../public/assets/sounds/soundsActivated.wav');
 
     useEffect(() => {
 
@@ -40,10 +52,12 @@ export default function Game(props){
         if(displayInstructions){
 
             setDisplayInstructions(false);
+            playSound(mainMenuSound, soundsOn);
 
         } else if (!displayInstructions){
 
             setDisplayInstructions(true);
+            playSound(instructionsSound, soundsOn);
         }
     }
 
@@ -51,6 +65,7 @@ export default function Game(props){
 
         if(guess.includes('black')){
 
+            playSound(ahAhAhSound, soundsOn);
             await childRef.current.flashCircles('darkred', guess);
 
         } else {
@@ -90,16 +105,16 @@ export default function Game(props){
     
             setBlackWhitePegs({correctColorCorrectPosition: correctColorCorrectPosition, correctColorIncorrectPosition: correctColorIncorrectPosition})
 
-            if(correctColorCorrectPosition === numberOfHolesPerGuessArray[gameType]){
+            // if(correctColorCorrectPosition === numberOfHolesPerGuessArray[gameType]){
 
-                await childRef.current.flashCircles('green', null, true);
-                childRef.current.drawActualCodeCircles(null, colorCode);
+            //     await childRef.current.flashCircles('green', null, true);
+            //     childRef.current.drawActualCodeCircles(null, colorCode);
 
-            } else if (guessCounter === numberOfGuessesArray[gameType] - 1 && correctColorCorrectPosition !== numberOfHolesPerGuessArray[gameType]){
+            // } else if (guessCounter === numberOfGuessesArray[gameType] - 1 && correctColorCorrectPosition !== numberOfHolesPerGuessArray[gameType]){
 
-                await childRef.current.flashCircles('darkred', null, true);
-                childRef.current.drawActualCodeCircles(null, colorCode);
-            }
+            //     await childRef.current.flashCircles('darkred', null, true);
+            //     childRef.current.drawActualCodeCircles(null, colorCode);
+            // }
         }
     }
 
@@ -111,9 +126,23 @@ export default function Game(props){
 
     const playGame = async (gameTypeLocal) => {
 
+        switch(gameTypeLocal){
+
+            case "regular":
+                playSound(standardSound, soundsOn);
+                break;
+            case "super":
+                playSound(superSound, soundsOn);
+                break;
+            case "mini":
+                playSound(miniSound, soundsOn);
+                break;
+        }
+
         if(gameType === gameTypeLocal){
 
             setColorCode(generateColorCode());
+            setBlackWhitePegs(null);
         
         } else {
 
@@ -147,6 +176,26 @@ export default function Game(props){
 
         setGameComplete(false);
         setGameInProgress(false);
+        setBlackWhitePegs(null);
+        playSound(mainMenuSound, soundsOn);
+    }
+
+    const muteSounds = () => {
+
+
+        if(soundsOn){
+
+            setMuteUnmuteString("Unmute");
+            playSound(soundsMuted, soundsOn);
+        
+        } else if(!soundsOn){
+
+            
+            setMuteUnmuteString("Mute");
+            playSound(soundsActivated);
+        }
+
+        setSoundsOn(!soundsOn);
     }
 
     const generateColorCode = () => {
@@ -224,7 +273,8 @@ export default function Game(props){
                         onGuess={handleGuess} 
                         onGameComplete={handleGameComplete} 
                         forceUpdate={forceGameBoardUpdate} 
-                        calculatedGuessData={blackWhitePegs} 
+                        calculatedGuessData={blackWhitePegs}
+                        soundsOn={soundsOn} 
                         ref={childRef} />
                 </>     
             )}
@@ -241,6 +291,10 @@ export default function Game(props){
                     <button className='btn btn-bright-red' onClick={quit}>Quit</button>
                 </div> 
             )}  
+
+            <div className='fit-content mx-auto py-2'>
+                <button className='btn btn-orange' onClick={muteSounds}>{muteUnmuteString} Sounds </button>
+            </div>
                 
         </div>
     )

@@ -51,6 +51,18 @@
     color:rgb(230, 238, 245)
 }
 
+.btn-orange {
+
+    background-color: rgb(255, 140, 0);
+    color:aliceblue
+}
+
+.btn-orange:hover {
+
+    background-color: rgb(187, 117, 30);
+    color:aliceblue
+}
+
 .btn-bright-red:hover {
 
     background-color: #d70000;
