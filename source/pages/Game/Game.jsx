@@ -8,6 +8,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {Link} from 'react-router-dom';
 import GameBoardAndColorPicker from '../../components/GameBoard/GameBoardAndColorPicker';
 import { updateGameType } from '../../../store/reducers/slices/dynamicSlice';
+import playSound from '../../utilities/playSound';
 
 export default function Game(props){
 
@@ -25,6 +26,8 @@ export default function Game(props){
     const numberOfHolesPerGuessArray = useSelector(state => state.static.numberOfHolesPerGuess);
     const numberOfGuessesArray = useSelector(state => state.static.numberOfGuesses);
     const numberOfColorsArray = useSelector(state => state.static.numberOfColors);
+    const [soundsOn, setSoundsOn] = useState(true);
+    const [muteUnmuteString, setMuteUnmuteString] = useState("Mute");
 
     const gameTypeString = useSelector(state => state.dynamic.gameTypeArray ? state.dynamic.gameTypeArray[1] : "Mastermind");
     const gameTypebuttonClass = useSelector(state => state.dynamic.gameTypeArray ? state.dynamic.gameTypeArray[2] : null);
@@ -34,6 +37,9 @@ export default function Game(props){
     const miniSound = new Audio('../../../public/assets/sounds/miniSound.wav');
     const instructionsSound = new Audio('../../../public/assets/sounds/instructionsSound.wav');
     const mainMenuSound = new Audio('../../../public/assets/sounds/mainMenuSound.wav');
+    const ahAhAhSound = new Audio('../../../public/assets/sounds/AhAhAhSound.wav');
+    const soundsMuted = new Audio('../../../public/assets/sounds/soundsMuted.wav');
+    const soundsActivated = new Audio('../../../public/assets/sounds/soundsActivated.wav');
 
     useEffect(() => {
 
@@ -46,12 +52,12 @@ export default function Game(props){
         if(displayInstructions){
 
             setDisplayInstructions(false);
-            mainMenuSound.play()
+            playSound(mainMenuSound, soundsOn);
 
         } else if (!displayInstructions){
 
             setDisplayInstructions(true);
-            instructionsSound.play();
+            playSound(instructionsSound, soundsOn);
         }
     }
 
@@ -59,6 +65,7 @@ export default function Game(props){
 
         if(guess.includes('black')){
 
+            playSound(ahAhAhSound, soundsOn);
             await childRef.current.flashCircles('darkred', guess);
 
         } else {
@@ -122,13 +129,13 @@ export default function Game(props){
         switch(gameTypeLocal){
 
             case "regular":
-                standardSound.play();
+                playSound(standardSound, soundsOn);
                 break;
             case "super":
-                superSound.play();
+                playSound(superSound, soundsOn);
                 break;
             case "mini":
-                miniSound.play();
+                playSound(miniSound, soundsOn);
                 break;
         }
 
@@ -169,7 +176,26 @@ export default function Game(props){
 
         setGameComplete(false);
         setGameInProgress(false);
-        mainMenuSound.play();
+        setBlackWhitePegs(null);
+        playSound(mainMenuSound, soundsOn);
+    }
+
+    const muteSounds = () => {
+
+
+        if(soundsOn){
+
+            setMuteUnmuteString("Unmute");
+            playSound(soundsMuted, soundsOn);
+        
+        } else if(!soundsOn){
+
+            
+            setMuteUnmuteString("Mute");
+            playSound(soundsActivated);
+        }
+
+        setSoundsOn(!soundsOn);
     }
 
     const generateColorCode = () => {
@@ -247,7 +273,8 @@ export default function Game(props){
                         onGuess={handleGuess} 
                         onGameComplete={handleGameComplete} 
                         forceUpdate={forceGameBoardUpdate} 
-                        calculatedGuessData={blackWhitePegs} 
+                        calculatedGuessData={blackWhitePegs}
+                        soundsOn={soundsOn} 
                         ref={childRef} />
                 </>     
             )}
@@ -264,6 +291,10 @@ export default function Game(props){
                     <button className='btn btn-bright-red' onClick={quit}>Quit</button>
                 </div> 
             )}  
+
+            <div className='fit-content mx-auto py-2'>
+                <button className='btn btn-orange' onClick={muteSounds}>{muteUnmuteString} Sounds </button>
+            </div>
                 
         </div>
     )
