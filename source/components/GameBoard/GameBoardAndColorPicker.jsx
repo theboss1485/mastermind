@@ -129,7 +129,7 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
 
     useEffect(() => {
 
-        if(guessCounter === 0){
+        if(guessCounter === 0  && scaledCanvasWidth && scaledCanvasHeight){
 
             renderEntireCanvas()
             setCanvasRendered(true)
@@ -577,12 +577,12 @@ const GameBoard = React.forwardRef(({onGuess, calculatedGuessData, onGameComplet
 
                 if ((Math.pow(x - holeX, 2) + Math.pow(y - holeY, 2) <= Math.pow(largeRadius, 2)) && flashing === false ) {
 
-                    setClickedGameHoleIndices([gameHoleCounter, guessCounter]);
-
                     if(playerGuess[gameHoleCounter] !== gameBoardCircleFillColor){
 
                         playSound(normalPoppingSound, soundsOn);
                     }
+
+                    setClickedGameHoleIndices([gameHoleCounter, guessCounter]);
 
                     if(gameBoardCircleFillColor !== null){
 
